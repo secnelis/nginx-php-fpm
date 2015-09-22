@@ -29,10 +29,7 @@ rm -rf /usr/share/man/?? && \
 rm -rf /usr/share/man/??_*
 
 # tweak nginx config
-RUN sed -i -e"s/worker_processes  1/worker_processes 5/" /etc/nginx/nginx.conf && \
-sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf && \
-sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf && \
-echo "daemon off;" >> /etc/nginx/nginx.conf
+ADD ./nginx.conf /etc/nginx/nginx.conf
 
 # tweak php-fpm config
 RUN sed -i -e "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g" /etc/php5/fpm/php.ini && \
@@ -52,10 +49,9 @@ find /etc/php5/cli/conf.d/ -name "*.ini" -exec sed -i -re 's/^(\s*)#(.*)/\1;\2/g
 
 # nginx site conf
 RUN rm -Rf /etc/nginx/conf.d/* && \
-rm -Rf /etc/nginx/sites-available/default && \
+rm -Rf /etc/nginx/sites-available/* && \
+rm -Rf /etc/nginx/sites-enabled/* && \
 mkdir -p /etc/nginx/ssl/
-ADD ./nginx-site.conf /etc/nginx/sites-available/default.conf
-RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
 
 # Add git commands to allow container updating
 ADD ./pull /usr/bin/pull
@@ -70,11 +66,11 @@ ADD ./start.sh /start.sh
 RUN chmod 755 /start.sh
 
 # Setup Volume
-VOLUME ["/usr/share/nginx/html"]
+VOLUME ["/etc/nginx/sites-enabled"]
 
 # add test PHP file
-ADD ./index.php /usr/share/nginx/html/index.php
-RUN chown -Rf www-data.www-data /usr/share/nginx/html/
+#ADD ./index.php /usr/share/nginx/html/index.php
+#RUN chown -Rf www-data.www-data /usr/share/nginx/html/
 
 # Expose Ports
 EXPOSE 443
